@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TrailWise · Budget Adventure Planner</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#f4f6f1;--card:#fff;--ink:#1d2a22;--mut:#66756b;--line:#dfe5dc;--g:#2f7d4f;--gd:#1f5c39;--warn:#b7791f;--bad:#c0392b;--ok:#2f7d4f;--chip:#eaf2ec}
+@media(prefers-color-scheme:dark){:root{--bg:#121813;--card:#1a221c;--ink:#e6efe8;--mut:#93a598;--line:#2a362d;--chip:#223127;--g:#5bbf84;--gd:#7fd6a2}}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{padding:14px 20px;background:var(--gd);color:#fff;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+header h1{margin:0;font-size:20px}header span{opacity:.85;font-size:13px}
+main{display:grid;grid-template-columns:330px 1fr 360px;gap:14px;padding:14px;max-width:1700px;margin:auto}
+@media(max-width:1200px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+h2{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 2px}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{cursor:pointer;border:1px solid var(--g);background:var(--g);color:#fff;border-radius:6px;padding:8px 12px;font-weight:600}
+button.sec{background:transparent;color:var(--g)}button.sm{padding:4px 8px;font-size:12px}
+button:disabled{opacity:.5}
+.chip{display:inline-block;background:var(--chip);border-radius:99px;padding:2px 9px;font-size:11px;margin:1px 2px 1px 0;color:var(--mut)}
+.chip.ver{background:#d9f1e1;color:#17612f}.chip.est{background:#fdf0d5;color:#8a5a00}.chip.bad{background:#fbdcd8;color:#8f241a}
+@media(prefers-color-scheme:dark){.chip.ver{background:#1c4630;color:#9fe3bb}.chip.est{background:#463615;color:#f0c675}.chip.bad{background:#4d211d;color:#f3aaa2}}
+.tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}.tab{padding:5px 12px;border-radius:99px;border:1px solid var(--line);cursor:pointer;background:transparent;color:var(--ink);font-weight:500}.tab.on{background:var(--g);color:#fff;border-color:var(--g)}
+.blk{display:grid;grid-template-columns:92px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.blk .t{font-variant-numeric:tabular-nums;color:var(--mut);font-size:12px}
+.blk.act .ttl{font-weight:650}.blk.transfer,.blk.meal{opacity:.8;font-size:13px}
+.blk .meta{font-size:12px;color:var(--mut)}
+#map{height:320px;border-radius:8px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:4px 2px;text-align:left;border-bottom:1px solid var(--line)}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.banner{padding:10px 12px;border-radius:8px;margin-bottom:12px;font-weight:600}
+.banner.ok{background:#d9f1e1;color:#17612f}.banner.bad{background:#fbdcd8;color:#8f241a}
+@media(prefers-color-scheme:dark){.banner.ok{background:#1c4630;color:#9fe3bb}.banner.bad{background:#4d211d;color:#f3aaa2}}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--g)}.bar i.over{background:var(--bad)}
+.chat{max-height:260px;overflow:auto;font-size:13px}.msg{padding:6px 8px;border-radius:8px;margin:4px 0}.msg.u{background:var(--chip)}.msg.a{border:1px solid var(--line)}
+.chk{display:flex;gap:6px;font-size:12.5px;padding:2px 0}.tool{font-size:12px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.scn{display:flex;flex-wrap:wrap;gap:6px}.alt{font-size:12px;color:var(--mut)}
+details summary{cursor:pointer;font-weight:600;margin:4px 0}
+ul{margin:4px 0;padding-left:18px}
+</style></head><body>
+<header><h1>🥾 TrailWise</h1><span>Plan an adventure you can actually afford and complete · <span id="mode"></span></span></header>
+<main>
+<section>
+ <div class="card"><h2>1 · Describe your trip</h2>
+  <textarea id="nl" rows="3">3-day Rishikesh trip for 2 people, ₹5,500 per person, hiking, rafting and local food</textarea>
+  <div style="display:flex;gap:6px;margin-top:6px"><button class="sec sm" id="parseBtn">Understand text → fill form</button></div>
+  <div id="parseSrc" class="alt"></div></div>
+ <div class="card"><h2>2 · Trip requirements</h2>
+  <label>Destination</label><input id="destination" value="Rishikesh">
+  <div class="row"><div><label>Start date</label><input type="date" id="start_date"></div><div><label>Days</label><input type="number" id="days" min="1" max="7" value="3"></div></div>
+  <div class="row"><div><label>Travelers</label><input type="number" id="travelers" min="1" max="12" value="2"></div><div><label>Budget ₹ / person</label><input type="number" id="budget_pp" value="5500" step="100"></div></div>
+  <div class="row"><div><label>Arrival time (day 1)</label><input type="time" id="arrival_time" value="08:00"></div><div><label>Departure time (last day)</label><input type="time" id="departure_time" value="18:00"></div></div>
+  <label>Interests (comma separated)</label><input id="interests" value="hiking, rafting, food, culture">
+  <div class="row"><div><label>Accommodation</label><select id="stay"><option>hostel</option><option selected>homestay</option><option>hotel</option></select></div>
+   <div><label>Pace</label><select id="pace"><option>relaxed</option><option selected>balanced</option><option>packed</option></select></div></div>
+  <div class="row"><div><label>Meals</label><select id="meal_style"><option value="street">street food</option><option value="local" selected>local dhaba</option><option value="cafe">cafes</option></select></div>
+   <div><label>Intercity bus (Delhi)</label><select id="include_intercity"><option value="true" selected>include</option><option value="false">exclude</option></select></div></div>
+  <button id="go" style="width:100%;margin-top:12px">Generate itinerary</button>
+  <div id="err" style="color:var(--bad);margin-top:6px"></div></div>
+ <div class="card"><h2>Demo scenarios</h2><div class="scn">
+  <button class="sec sm" data-s="price_spike">① Rafting price spike</button>
+  <button class="sec sm" data-s="closure">② Rafting closed</button>
+  <button class="sec sm" data-s="nature">③ More nature-focused</button>
+  <button class="sec sm" data-s="api_down">API failure</button>
+  <button class="sec sm" data-s="api_up">API restored</button>
+  <button class="sec sm" data-s="tight_budget">Impossible budget</button></div></div>
+</section>
+<section>
+ <div id="banner"></div>
+ <div id="map"></div>
+ <div class="card"><div class="tabs" id="tabs"></div><div id="day"></div></div>
+ <div class="card"><h2>Revise with chat</h2><div class="chat" id="chat"></div>
+  <div style="display:flex;gap:6px;margin-top:8px"><input id="msg" placeholder="e.g. 'remove Kunjapuri', 'rafting now costs ₹1400', 'budget ₹4500', 'more nature-focused'"><button id="send">Send</button></div></div>
+</section>
+<section>
+ <div class="card"><h2>Budget</h2><div id="budget"></div></div>
+ <div class="card"><h2>Validation</h2><div id="checks"></div></div>
+ <div class="card"><h2>Assumptions & unresolved</h2><div id="assump"></div></div>
+ <div class="card"><h2>Agent tool calls</h2><div id="tools"></div></div>
+ <div class="card"><h2>Change history (memory)</h2><div id="hist"></div></div>
+</section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const $=id=>document.getElementById(id), fmt=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+let S=null, sid=null, dayIdx=0, map=null, layer=null;
+const d0=new Date(Date.now()+14*864e5); $('start_date').value=d0.toISOString().slice(0,10);
+const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+async function api(p,b,m){const r=await fetch(p,{method:m||'POST',headers:{'content-type':'application/json'},body:b?JSON.stringify(b):undefined});const j=await r.json();if(!r.ok)throw new Error(j.detail||'Request failed');return j}
+function prefs(){return{destination:$('destination').value||'Rishikesh',start_date:$('start_date').value,days:+$('days').value,travelers:+$('travelers').value,budget_pp:+$('budget_pp').value,
+ arrival_time:$('arrival_time').value,departure_time:$('departure_time').value,interests:$('interests').value.split(',').map(s=>s.trim()).filter(Boolean),
+ stay:$('stay').value,pace:$('pace').value,meal_style:$('meal_style').value,include_intercity:$('include_intercity').value==='true'}}
+function fill(p){for(const k in p){const e=$(k);if(!e||k==='weights')continue;e.value=Array.isArray(p[k])?p[k].join(', '):String(p[k])}}
+$('parseBtn').onclick=async()=>{try{const r=await api('/api/parse',{text:$('nl').value});fill({...prefs(),...r.prefs,start_date:$('start_date').value});$('parseSrc').textContent='Parsed by: '+r.source}catch(e){$('err').textContent=e.message}};
+$('go').onclick=async()=>{$('err').textContent='';$('go').disabled=true;try{S=await api('/api/plan',{session_id:sid,prefs:prefs()});sid=S.session_id;$('chat').innerHTML='';render()}catch(e){$('err').textContent=e.message}$('go').disabled=false};
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{if(!sid)return alert('Generate a plan first');S=await api('/api/scenario',{session_id:sid,name:b.dataset.s});bubble('a',S.reply);render()});
+async function send(){const m=$('msg').value.trim();if(!m||!sid)return;$('msg').value='';bubble('u',m);S=await api('/api/chat',{session_id:sid,message:m});bubble('a',S.reply+(S.interpreter?` [${S.interpreter}]`:''));render()}
+$('send').onclick=send;$('msg').onkeydown=e=>{if(e.key==='Enter')send()};
+function bubble(c,t){const d=document.createElement('div');d.className='msg '+c;d.textContent=t;$('chat').appendChild(d);$('chat').scrollTop=1e9}
+function render(){const p=S.plan,c=p.cost;
+ $('banner').innerHTML=p.status==='ok'?`<div class="banner ok">✅ Validated plan: ${fmt(c.total)} total (${fmt(c.per_person)}/person) within ${fmt(c.budget_total)} budget · ${fmt(c.remaining)} spare</div>`
+  :`<div class="banner bad">⚠ No fully valid plan within your constraints. Best effort costs ${fmt(c.total)} vs budget ${fmt(c.budget_total)}.<ul>${p.tradeoffs.map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
+ if(dayIdx>=p.days.length)dayIdx=0;
+ $('tabs').innerHTML=p.days.map((d,i)=>`<button class="tab ${i===dayIdx?'on':''}" onclick="dayIdx=${i};render()">${d.label} · ${d.date.slice(5)} · ${d.weather.precip}% rain</button>`).join('');
+ const d=p.days[dayIdx];
+ $('day').innerHTML=`<div class="meta alt">Day window ${d.window[0]}–${d.window[1]} · weather: ${d.weather.tmax}°C, ${d.weather.precip}% rain <span class="chip est">${d.weather.source}</span></div>`+
+  d.blocks.map(b=>`<div class="blk ${b.type==='activity'?'act':b.type}"><div class="t">${hm(b.start)}–${hm(b.end)}</div><div><div class="ttl">${b.type==='transfer'?'🚕 ':b.type==='meal'?'🍛 ':''}${b.title}</div>
+   ${b.type==='activity'?`<div class="meta">${b.desc}</div><div>${fmt(b.cost_pp)} pp · ${fmt(b.cost_total)} group <span class="chip ${b.verified?'ver':'est'}">${b.verified?'verified':'estimated'}</span><span class="chip">${b.source}</span>${b.wait>0?`<span class="chip">waits ${b.wait} min for opening</span>`:''}</div>
+   ${b.alternatives&&b.alternatives.length?`<div class="alt">Cheaper alternatives: ${b.alternatives.map(a=>`${a.name} (${fmt(a.cost_pp)}, saves ${fmt(a.saves_pp)}/pp)`).join(' · ')}</div>`:''}`:''}
+   ${b.type==='transfer'?`<div class="meta">${b.km} km · ${b.cost_total?fmt(b.cost_total)+' ':'free '}<span class="chip">${b.source}</span></div>`:''}</div></div>`).join('')||'<div class="alt">No feasible activities on this day.</div>';
+ const pct=Math.min(100,c.total/c.budget_total*100);
+ $('budget').innerHTML=`<div style="font-size:22px;font-weight:700">${fmt(c.total)} <span style="font-size:13px;color:var(--mut)">of ${fmt(c.budget_total)}</span></div><div class="bar"><i class="${c.within_budget?'':'over'}" style="width:${pct}%"></i></div>
+ <table>${Object.entries(c.by_category).map(([k,v])=>`<tr><td>${k}</td><td class="n">${fmt(v)}</td></tr>`).join('')}<tr><th>Group total</th><th class="n">${fmt(c.total)}</th></tr><tr><td>Per person</td><td class="n">${fmt(c.per_person)}</td></tr><tr><td>Remaining</td><td class="n" style="color:${c.remaining<0?'var(--bad)':'inherit'}">${fmt(c.remaining)}</td></tr></table>
+ <div style="margin-top:6px"><span class="chip ver">verified ${fmt(c.verified_amount)}</span><span class="chip est">estimated ${fmt(c.estimated_amount)}</span><span class="chip">contingency ${fmt(c.contingency)}</span></div>
+ <details><summary>Line items</summary><table>${c.lines.map(l=>`<tr><td>${l.item}</td><td class="n">${fmt(l.amount)}</td><td><span class="chip ${l.verified?'ver':'est'}">${l.verified?'V':'E'}</span></td></tr>`).join('')}</table></details>`;
+ $('checks').innerHTML=p.checks.map(k=>`<div class="chk"><span>${k.ok?'✅':(k.hard?'❌':'⚠️')}</span><span><b>${k.name}</b> — ${k.detail}</span></div>`).join('');
+ $('assump').innerHTML='<ul>'+p.assumptions.map(a=>`<li>${a}</li>`).join('')+'</ul>'+(p.unresolved.length?'<b>Unresolved</b><ul>'+p.unresolved.map(a=>`<li>${a}</li>`).join('')+'</ul>':'')+(p.notes.length?'<b>Notes</b><ul>'+p.notes.map(a=>`<li>${a}</li>`).join('')+'</ul>':'');
+ $('tools').innerHTML=p.toolcalls.map(t=>`<div class="tool"><b>${t.tool}</b> <span class="chip ${t.status==='ok'?'ver':'bad'}">${t.status}</span> <span class="chip">${t.source}</span><div class="alt">${t.note||JSON.stringify(t.args)} · ${t.at}</div></div>`).join('');
+ $('hist').innerHTML=S.history.map(h=>`<div class="tool"><b>${h.reason}</b><div class="alt">${(h.diff||[]).join(' · ')||'—'} · ${h.status} · ${fmt(h.total)}</div></div>`).join('');
+ drawMap()}
+function drawMap(){if(typeof L==='undefined'){$('map').innerHTML='<div class="alt" style="padding:20px">Map library unavailable offline.</div>';return}
+ if(!map){map=L.map('map').setView([S.base.lat,S.base.lng],12);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map)}
+ if(layer)layer.remove();layer=L.layerGroup().addTo(map);const d=S.plan.days[dayIdx],pts=[[S.base.lat,S.base.lng]];
+ L.circleMarker(pts[0],{radius:7,color:'#444',fillOpacity:.9}).bindTooltip('Stay').addTo(layer);let k=0;
+ d.blocks.filter(b=>b.type==='activity').forEach(b=>{k++;pts.push([b.lat,b.lng]);L.marker([b.lat,b.lng]).bindTooltip(`${k}. ${b.title} ${hm(b.start)}`).addTo(layer)});
+ pts.push(pts[0]);L.polyline(pts,{color:'#2f7d4f',dashArray:'6'}).addTo(layer);if(pts.length>2)map.fitBounds(pts,{padding:[30,30]});setTimeout(()=>map.invalidateSize(),50)}
+fetch('/api/health').then(r=>r.json()).then(h=>$('mode').textContent=(h.llm?'LLM: on':'LLM: off (heuristic parser)')+' · '+(h.live_apis?'live APIs':'fallback data'));
+$('go').click();
+</script></body></html>
